@@ -3,6 +3,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Globalization;
 
 namespace SelfcareService;
 
@@ -110,6 +112,19 @@ public class Worker : BackgroundService
             : "/tmp/selfcare_port.txt";
     }
 
+    private string GenerateAuthKey()
+    {
+        var hostname = Dns.GetHostName();
+        var username = Environment.UserName;
+        var time = DateTime.UtcNow.ToString("HH00", CultureInfo.InvariantCulture);
+        var data = String.Concat(hostname, username, time);
+
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(data);
+        var hash = sha256.ComputeHash(bytes);
+        return Convert.ToBase64String(hash);
+    }
+
     private async Task HandleClient(TcpClient client, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Client connected");
@@ -125,9 +140,28 @@ public class Worker : BackgroundService
                 if (bytesRead > 0)
                 {
                     var request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    _logger.LogInformation($"Received request: {request}");
+                    _logger.LogInformation($"Received request from client");
                     
-                    var response = await ProcessRequest(request);
+                    // Extract auth key and actual request
+                    var lines = request.Split('\n', 2);
+                    if (lines.Length < 2)
+                    {
+                        _logger.LogWarning("Request missing authentication key");
+                        return;
+                    }
+                    
+                    var clientKey = lines[0].Trim();
+                    var actualRequest = lines[1];
+                    var expectedKey = GenerateAuthKey();
+                    
+                    if (clientKey != expectedKey)
+                    {
+                        _logger.LogWarning($"Authentication failed. Expected key length: {expectedKey.Length}, Client key length: {clientKey.Length}");
+                        return;
+                    }
+                    
+                    _logger.LogInformation("Authentication successful");
+                    var response = await ProcessRequest(actualRequest);
                     var responseBytes = Encoding.UTF8.GetBytes(response);
                     
                     await stream.WriteAsync(responseBytes, cancellationToken);
