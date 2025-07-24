@@ -5,6 +5,7 @@ After=network.target
 [Service]
 Type=notify
 ExecStart=/opt/selfcare-service/SelfcareService
+ExecStartPost=/bin/chmod 644 /tmp/selfcare_port.txt
 Restart=always
 RestartSec=5
 User=root
