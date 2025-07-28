@@ -2,6 +2,9 @@
 
 # Selfcare Service Installation Script for Linux
 # This script installs the SelfcareService as a systemd service running as root
+#
+# Note: This version includes updated Windows-specific authentication fixes
+# that resolve communication issues between LocalSystem service and user apps.
 
 set -e
 
@@ -27,19 +30,22 @@ if ! command -v dotnet &> /dev/null; then
     exit 1
 fi
 
-# Build the application if not already built
-PUBLISH_DIR="$CURRENT_DIR/SelfcareService/bin/Release/net9.0/publish"
+# Use pre-built distribution directory
+PUBLISH_DIR="$CURRENT_DIR/dist/linux"
+
+# Check if distribution directory exists
 if [[ ! -d "$PUBLISH_DIR" ]]; then
-    echo "Building and publishing the application..."
-    cd "$CURRENT_DIR/SelfcareService"
-    dotnet publish -c Release -o bin/Release/net9.0/publish --self-contained false
-    cd "$CURRENT_DIR"
+    echo "ERROR: Distribution directory not found at $PUBLISH_DIR"
+    echo "Please build the distribution first by running:"
+    echo "  cd SelfcareService && dotnet publish -c Release -r linux-x64 --self-contained"
+    echo "  Then copy the files to dist/linux/"
+    exit 1
 fi
 
 # Check if executable exists
 if [[ ! -f "$PUBLISH_DIR/SelfcareService" ]]; then
     echo "ERROR: Service executable not found at $PUBLISH_DIR/SelfcareService"
-    echo "Please build the project first using: dotnet publish -c Release"
+    echo "Please ensure the distribution is properly built in dist/linux/"
     exit 1
 fi
 

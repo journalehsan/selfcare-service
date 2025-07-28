@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "U6H0AJuFCkA=",
+  "dgSpecHash": "rg0AN6r9wM4=",
   "success": true,
   "projectFilePath": "/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
   "expectedPackageFiles": [
@@ -36,7 +36,10 @@
     "/home/ehsant/.nuget/packages/system.diagnostics.eventlog/9.0.0/system.diagnostics.eventlog.9.0.0.nupkg.sha512",
     "/home/ehsant/.nuget/packages/system.serviceprocess.servicecontroller/9.0.0/system.serviceprocess.servicecontroller.9.0.0.nupkg.sha512",
     "/home/ehsant/.nuget/packages/system.text.json/9.0.0/system.text.json.9.0.0.nupkg.sha512",
-    "/home/ehsant/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.7/microsoft.aspnetcore.app.ref.9.0.7.nupkg.sha512"
+    "/home/ehsant/.nuget/packages/microsoft.netcore.app.runtime.linux-x64/9.0.7/microsoft.netcore.app.runtime.linux-x64.9.0.7.nupkg.sha512",
+    "/home/ehsant/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.7/microsoft.aspnetcore.app.ref.9.0.7.nupkg.sha512",
+    "/home/ehsant/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-x64/9.0.7/microsoft.aspnetcore.app.runtime.linux-x64.9.0.7.nupkg.sha512",
+    "/home/ehsant/.nuget/packages/microsoft.netcore.app.host.linux-x64/9.0.7/microsoft.netcore.app.host.linux-x64.9.0.7.nupkg.sha512"
   ],
   "logs": []
 }

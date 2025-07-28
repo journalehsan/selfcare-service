@@ -217,7 +217,6 @@
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/hostfxr.dll
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/hostpolicy.dll
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore.dll
-/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore_amd64_amd64_9.0.525.21509.dll
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordbi.dll
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscorrc.dll
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/msquic.dll
@@ -233,3 +232,4 @@
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Release/net9.0/win-x64/SelfcareService.pdb
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Release/net9.0/win-x64/SelfcareService.genruntimeconfig.cache
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Release/net9.0/win-x64/ref/SelfcareService.dll
+/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore_amd64_amd64_9.0.725.31616.dll
