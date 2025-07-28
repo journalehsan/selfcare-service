@@ -44,6 +44,7 @@
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Debug/net9.0/SelfcareService.AssemblyInfoInputs.cache
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Debug/net9.0/SelfcareService.AssemblyInfo.cs
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Debug/net9.0/SelfcareService.csproj.CoreCompileInputs.cache
+/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Debug/net9.0/SelfcareService.sourcelink.json
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Debug/net9.0/Selfcare.DD4AFC5D.Up2Date
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Debug/net9.0/SelfcareService.dll
 /home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/Debug/net9.0/refint/SelfcareService.dll

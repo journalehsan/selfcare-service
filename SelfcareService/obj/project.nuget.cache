@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "7XgWwaMeKHw=",
+  "dgSpecHash": "U6H0AJuFCkA=",
   "success": true,
   "projectFilePath": "/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
   "expectedPackageFiles": [
@@ -36,7 +36,7 @@
     "/home/ehsant/.nuget/packages/system.diagnostics.eventlog/9.0.0/system.diagnostics.eventlog.9.0.0.nupkg.sha512",
     "/home/ehsant/.nuget/packages/system.serviceprocess.servicecontroller/9.0.0/system.serviceprocess.servicecontroller.9.0.0.nupkg.sha512",
     "/home/ehsant/.nuget/packages/system.text.json/9.0.0/system.text.json.9.0.0.nupkg.sha512",
-    "/home/ehsant/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.5/microsoft.aspnetcore.app.ref.9.0.5.nupkg.sha512"
+    "/home/ehsant/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.7/microsoft.aspnetcore.app.ref.9.0.7.nupkg.sha512"
   ],
   "logs": []
 }

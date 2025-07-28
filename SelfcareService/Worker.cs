@@ -115,14 +115,33 @@ public class Worker : BackgroundService
     private string GenerateAuthKey()
     {
         var hostname = Dns.GetHostName();
-        var username = Environment.UserName;
         var time = DateTime.UtcNow.ToString("HH00", CultureInfo.InvariantCulture);
-        var data = String.Concat(hostname, username, time);
+        
+        string data;
+        if (OperatingSystem.IsWindows())
+        {
+            // Windows: Use only hostname + time to avoid username mismatch
+            // between LocalSystem service and user app
+            data = String.Concat(hostname, time);
+            _logger.LogDebug($"Auth Debug - Platform: Windows, Hostname: {hostname}, Data: {data}");
+        }
+        else
+        {
+            // Linux/Unix: Use hostname + username + time for backward compatibility
+            var username = Environment.UserName;
+            data = String.Concat(hostname, username, time);
+            _logger.LogDebug($"Auth Debug - Platform: Linux/Unix, Hostname: {hostname}, Username: {username}, Data: {data}");
+        }
+        
+        _logger.LogDebug($"Auth Debug - Time UTC: {time}");
 
         using var sha256 = SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(data);
         var hash = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
+        var authKey = Convert.ToBase64String(hash);
+        
+        _logger.LogDebug($"Auth Debug - Generated key length: {authKey.Length}");
+        return authKey;
     }
 
     private async Task HandleClient(TcpClient client, CancellationToken cancellationToken)
