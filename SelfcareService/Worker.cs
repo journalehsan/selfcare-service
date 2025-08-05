@@ -13,6 +13,7 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private TcpListener? _tcpListener;
     private int _port = 8080;
+    private SecureAuthenticator? _secureAuth;
 
     public Worker(ILogger<Worker> logger)
     {
@@ -22,6 +23,10 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Selfcare Service starting...");
+
+        // Initialize secure authentication
+        _secureAuth = new SecureAuthenticator();
+        _secureAuth.Initialize();
 
         // Find available port and start TCP listener
         await StartTcpListener(stoppingToken);
@@ -61,6 +66,8 @@ public class Worker : BackgroundService
             }
             catch (SocketException)
             {
+                _tcpListener?.Stop();
+                _tcpListener = null;
                 _port++;
                 _logger.LogWarning($"Port {_port - 1} in use, trying {_port}");
             }
@@ -107,9 +114,16 @@ public class Worker : BackgroundService
 
     private string GetPortFilePath()
     {
-        return OperatingSystem.IsWindows() 
-            ? Path.Combine(Path.GetTempPath(), "selfcare_port.txt")
-            : "/tmp/selfcare_port.txt";
+        if (OperatingSystem.IsWindows())
+        {
+            return Path.Combine(Path.GetTempPath(), "selfcare_port.txt");
+        }
+        else
+        {
+            // Use user's home directory instead of /tmp for better permissions
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return Path.Combine(homeDir, ".selfcare_port.txt");
+        }
     }
 
     private string GenerateAuthKey()
@@ -169,13 +183,12 @@ public class Worker : BackgroundService
                         return;
                     }
                     
-                    var clientKey = lines[0].Trim();
+                    var clientToken = lines[0].Trim();
                     var actualRequest = lines[1];
-                    var expectedKey = GenerateAuthKey();
                     
-                    if (clientKey != expectedKey)
+                    if (_secureAuth == null || !_secureAuth.VerifyAuthToken(clientToken, 300))
                     {
-                        _logger.LogWarning($"Authentication failed. Expected key length: {expectedKey.Length}, Client key length: {clientKey.Length}");
+                        _logger.LogWarning($"Secure authentication failed. Token length: {clientToken.Length}");
                         return;
                     }
                     
