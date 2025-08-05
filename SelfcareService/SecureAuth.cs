@@ -303,9 +303,6 @@ public class SecureAuthenticator
             if (username != AUTH_USERNAME || password != AUTH_PASSWORD)
                 return false;
 
-            // Verify machine ID
-            if (machineId != _machineId)
-                return false;
 
             // Verify timestamp (prevent replay attacks)
             if (!long.TryParse(timestampStr, out var timestamp))

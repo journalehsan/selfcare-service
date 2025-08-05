@@ -1,157 +1,225 @@
 # SelfCare Service Authentication
 
-This document describes the time-based authentication system implemented for the SelfCare service to provide basic security for command execution.
+This document describes the basic authentication system implemented for the SelfCare service to provide simple security for command execution.
 
 ## Overview
 
-The authentication system uses a simple time-based key generation mechanism that combines:
-- Machine hostname
-- Current username  
-- Current hour (in HH00 format, e.g., "0300" for 3 AM, "2300" for 11 PM)
+The authentication system uses a simple fixed token-based mechanism for basic security. This is designed for development and testing environments where simplicity is preferred over complex cryptographic security.
 
-This provides a rolling authentication window where keys are valid for one hour at a time.
+**Current Implementation:** Fixed token authentication using `"selfcare:SelfCare@#2025"`
 
 ## How It Works
 
-### Key Generation Algorithm
+### Authentication Method
 
-Both the client (Rust) and service (C#) generate the same authentication key using:
+The service uses a fixed authentication token for all requests. This provides basic protection while keeping the implementation simple and avoiding complex time-based or cryptographic authentication mechanisms.
 
-1. **Data Collection:**
-   - Hostname: `Dns.GetHostName()` (C#) / `whoami::hostname()` (Rust)
-   - Username: `Environment.UserName` (C#) / `whoami::username()` (Rust)
-   - Time: `DateTime.UtcNow.ToString("HH00")` (C#) / `chrono::Utc::now().format("%H00")` (Rust)
+### Protocol Format
 
-2. **Key Construction:**
-   - Concatenate: `hostname + username + time`
-   - Example: `"MyComputer" + "john" + "1400"` = `"MyComputerjohn1400"`
+Communication between clients and the service follows a two-line protocol:
 
-3. **Hashing:**
-   - SHA256 hash of the concatenated string
-   - Base64 encode the hash result
+1. **Line 1:** Authentication token
+2. **Line 2:** JSON service request
 
 ### Authentication Flow
 
-1. **Client Request:**
+1. **Client Request Format:**
    ```
-   [AUTH_KEY]
-   [JSON_REQUEST]
+   selfcare:SelfCare@#2025
+   {"Type":"RunCommand","Command":"echo","Arguments":"Hello World"}
    ```
 
 2. **Service Validation:**
-   - Extract auth key from first line
-   - Generate expected key using same algorithm
-   - Compare keys (exact match required)
-   - Process request only if keys match
-
-### Security Features
-
-- **Time-based rotation:** Keys change every hour automatically
-- **Machine-specific:** Keys are unique per hostname/username combination
-- **Non-predictable:** SHA256 hashing prevents easy key guessing
-- **No network exposure:** Authentication data never leaves the local machine
+   - Extract authentication token from first line
+   - Compare with expected token: `"selfcare:SelfCare@#2025"`
+   - Parse JSON request from second line if authentication succeeds
+   - Process request and return JSON response
 
 ## Implementation Details
 
 ### C# Service (Worker.cs)
 
 ```csharp
-private string GenerateAuthKey()
+private async Task HandleClient(TcpClient client, CancellationToken cancellationToken)
 {
-    var hostname = Dns.GetHostName();
-    var username = Environment.UserName;
-    var time = DateTime.UtcNow.ToString("HH00", CultureInfo.InvariantCulture);
-    var data = String.Concat(hostname, username, time);
-
-    using var sha256 = SHA256.Create();
-    var bytes = Encoding.UTF8.GetBytes(data);
-    var hash = sha256.ComputeHash(bytes);
-    return Convert.ToBase64String(hash);
+    // Read request data
+    var buffer = new byte[4096];
+    var bytesRead = await stream.ReadAsync(buffer, cancellationToken);
+    var request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+    
+    // Parse authentication and request
+    var lines = request.Split('\n', 2);
+    if (lines.Length < 2)
+    {
+        _logger.LogWarning("Request missing authentication key");
+        return;
+    }
+    
+    var clientToken = lines[0].Trim();
+    var actualRequest = lines[1];
+    
+    // Simple basic authentication
+    string expectedToken = "selfcare:SelfCare@#2025";
+    if (clientToken != expectedToken)
+    {
+        _logger.LogWarning($"Basic authentication failed. Expected: '{expectedToken}', Received: '{clientToken}'");
+        return;
+    }
+    
+    // Process authenticated request
+    var response = await ProcessRequest(actualRequest);
+    var responseBytes = Encoding.UTF8.GetBytes(response);
+    await stream.WriteAsync(responseBytes, cancellationToken);
 }
 ```
 
-### Rust Client (run_command.rs)
+### Rust Client Example
 
 ```rust
-fn generate_auth_key(&self) -> String {
-    let hostname = whoami::hostname();
-    let username = whoami::username();
-    let time = chrono::Utc::now().format("%H00").to_string();
-    let data = format!("{}{}{}", hostname, username, time);
+use std::io::{Read, Write};
+use std::net::TcpStream;
+use serde_json;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Connect to service
+    let mut stream = TcpStream::connect("127.0.0.1:8080")?;
     
-    let mut hasher = Sha256::new();
-    hasher.update(data.as_bytes());
-    let result = hasher.finalize();
+    // Create request
+    let auth_token = "selfcare:SelfCare@#2025";
+    let service_request = serde_json::json!({
+        "Type": "RunCommand",
+        "Command": "echo",
+        "Arguments": "Hello from Rust client!"
+    });
     
-    base64::engine::general_purpose::STANDARD.encode(&result)
+    let service_request_json = serde_json::to_string(&service_request)?;
+    let full_request = format!("{}\n{}", auth_token, service_request_json);
+    
+    // Send request
+    stream.write_all(full_request.as_bytes())?;
+    stream.flush()?;
+    
+    // Read response
+    let mut buffer = Vec::new();
+    stream.read_to_end(&mut buffer)?;
+    let response = String::from_utf8(buffer)?;
+    
+    println!("Response: {}", response);
+    Ok(())
+}
+```
+
+## Service Request Types
+
+The service supports the following request types:
+
+### RunCommand
+```json
+{
+  "Type": "RunCommand",
+  "Command": "echo",
+  "Arguments": "Hello World"
+}
+```
+
+### GetSystemStatus
+```json
+{
+  "Type": "GetSystemStatus"
+}
+```
+
+### CheckPrivileges
+```json
+{
+  "Type": "CheckPrivileges"
+}
+```
+
+## Service Response Format
+
+All service responses follow this JSON format:
+
+```json
+{
+  "Success": true,
+  "Message": "Command executed successfully",
+  "Output": "Hello World\n",
+  "ExitCode": 0
 }
 ```
 
 ## Security Considerations
 
 ### Strengths
-- **Local-only:** No network credentials to intercept
-- **Time-limited:** Keys expire automatically every hour
-- **User-specific:** Each user generates different keys
-- **Machine-specific:** Each machine generates different keys
+- **Simple implementation:** Easy to understand and debug
+- **Local-only:** Service typically runs on localhost
+- **Basic protection:** Prevents accidental unauthorized access
+- **No complex dependencies:** No cryptographic libraries required
 
 ### Limitations
-- **Not cryptographically secure:** This is basic protection, not enterprise-grade security
-- **Clock dependency:** Requires synchronized system clocks
-- **Predictable pattern:** Attackers who know the algorithm could generate keys
-- **No replay protection:** Same request can be sent multiple times within the hour
+- **Fixed token:** Same token used for all requests
+- **No encryption:** Token transmitted in plain text
+- **No expiration:** Token never changes unless manually updated
+- **Basic security:** Not suitable for production environments with security requirements
 
 ### Recommendations
-- Use only in trusted network environments
-- Run service with minimal required privileges
-- Monitor service logs for authentication failures
-- Consider implementing additional security layers for production use
+- **Development/Testing Only:** This authentication method is designed for development and testing
+- **Trusted environments:** Use only in controlled, trusted network environments
+- **Network isolation:** Run service on localhost or isolated networks
+- **Regular updates:** Consider changing the token periodically
+- **Enhanced security:** Implement proper authentication for production use
 
 ## Usage
 
 ### Testing Authentication
 ```bash
-# Build and run the test program
-cargo build --bin test_auth
-cargo run --bin test_auth
+# Using the test client
+cd /path/to/rust-client
+cargo build --release
+./target/release/test-run-command
 ```
 
 ### Expected Behavior
-- ✅ Authenticated requests from correct user/machine succeed
-- ❌ Requests without authentication keys are rejected
-- ❌ Requests with incorrect authentication keys are rejected
-- ❌ Requests from different users/machines are rejected (unless same hostname/username)
+- ✅ Requests with correct token `"selfcare:SelfCare@#2025"` succeed
+- ❌ Requests without authentication token are rejected
+- ❌ Requests with incorrect authentication tokens are rejected
+- ❌ Malformed requests (missing second line) are rejected
 
 ## Troubleshooting
 
 ### Authentication Failures
-1. **Check system time:** Ensure client and service have synchronized clocks
-2. **Verify username:** Make sure both client and service see the same username
-3. **Check hostname:** Ensure both client and service resolve the same hostname
-4. **Review logs:** Service logs authentication attempts with details
+1. **Check token:** Ensure exact match with `"selfcare:SelfCare@#2025"`
+2. **Verify format:** Ensure request follows two-line protocol format
+3. **Review logs:** Service logs authentication attempts with details
+4. **Check connection:** Verify service is running and accessible
 
 ### Common Issues
-- **Time zone differences:** Both client and service use UTC time
-- **Username casing:** Username comparison is case-sensitive
-- **Hostname resolution:** Different hostname resolution methods might cause mismatches
+- **Token mismatch:** Case-sensitive token comparison
+- **Protocol format:** Missing newline between token and JSON request
+- **JSON format:** Malformed JSON in service request
+- **Network connectivity:** Service not accessible on expected port
 
 ## Log Messages
 
 ### Successful Authentication
 ```
 [INFO] Client connected
+[INFO] Received request from client
 [INFO] Authentication successful
-[INFO] Command 'whoami' executed with exit code 0
+[INFO] Command 'echo Hello World' executed with exit code 0
 ```
 
 ### Failed Authentication
 ```
 [INFO] Client connected
-[WARN] Authentication failed. Expected key length: 44, Client key length: 44
+[INFO] Received request from client
+[WARN] Basic authentication failed. Expected: 'selfcare:SelfCare@#2025', Received: 'wrong_token'
 ```
 
 ### Missing Authentication
 ```
 [INFO] Client connected
+[INFO] Received request from client
 [WARN] Request missing authentication key
 ```

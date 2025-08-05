@@ -21,6 +21,7 @@ The service uses TCP sockets for inter-process communication (IPC) with the main
 - **JSON-based messaging**: Request/response format using JSON serialization
 - **Port discovery**: Automatic port allocation (8080-8099 range) with file-based discovery
 - **Secure permissions**: Port file secured with 600 permissions on Unix systems
+- **Basic Authentication**: Simple token-based authentication using fixed token `"selfcare:SelfCare@#2025"`
 
 ### Supported Operations
 1. **RunCommand**: Execute system commands with arguments
@@ -100,7 +101,7 @@ The service automatically:
 
 ## Integration with Rust Client
 
-The Rust client uses the `run_command` module to communicate with this service:
+The Rust client uses the `run_command` module to communicate with this service. All requests must include the authentication token `"selfcare:SelfCare@#2025"` as the first line.
 
 ```rust
 use selfcare::core::run_command::{run_privileged_command, is_service_running};
@@ -112,6 +113,16 @@ if is_service_running() {
     println!("Output: {}", result.output);
 }
 ```
+
+### Protocol Format
+
+Client requests follow a two-line protocol:
+```
+selfcare:SelfCare@#2025
+{"Type":"RunCommand","Command":"echo","Arguments":"Hello World"}
+```
+
+See [AUTHENTICATION.md](AUTHENTICATION.md) for detailed authentication information.
 
 ## Logging
 
