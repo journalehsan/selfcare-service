@@ -1424,7 +1424,7 @@
       "any",
       "base"
     ],
-    "arch-x64": [
+    "rocky.10-x64": [
       "linux-x64",
       "linux",
       "unix-x64",

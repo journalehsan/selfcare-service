@@ -2,6 +2,24 @@
   "version": 3,
   "targets": {
     "net9.0": {
+      "AudioSwitcher.AudioApi/4.0.0-alpha5": {
+        "type": "package",
+        "compile": {
+          "lib/net45/AudioSwitcher.AudioApi.dll": {}
+        },
+        "runtime": {
+          "lib/net45/AudioSwitcher.AudioApi.dll": {}
+        }
+      },
+      "AudioSwitcher.AudioApi.CoreAudio/4.0.0-alpha5": {
+        "type": "package",
+        "compile": {
+          "lib/net45/AudioSwitcher.AudioApi.CoreAudio.dll": {}
+        },
+        "runtime": {
+          "lib/net45/AudioSwitcher.AudioApi.CoreAudio.dll": {}
+        }
+      },
       "Microsoft.Extensions.Configuration/9.0.0": {
         "type": "package",
         "dependencies": {
@@ -687,6 +705,24 @@
       }
     },
     "net9.0/linux-x64": {
+      "AudioSwitcher.AudioApi/4.0.0-alpha5": {
+        "type": "package",
+        "compile": {
+          "lib/net45/AudioSwitcher.AudioApi.dll": {}
+        },
+        "runtime": {
+          "lib/net45/AudioSwitcher.AudioApi.dll": {}
+        }
+      },
+      "AudioSwitcher.AudioApi.CoreAudio/4.0.0-alpha5": {
+        "type": "package",
+        "compile": {
+          "lib/net45/AudioSwitcher.AudioApi.CoreAudio.dll": {}
+        },
+        "runtime": {
+          "lib/net45/AudioSwitcher.AudioApi.CoreAudio.dll": {}
+        }
+      },
       "Microsoft.Extensions.Configuration/9.0.0": {
         "type": "package",
         "dependencies": {
@@ -1357,6 +1393,32 @@
     }
   },
   "libraries": {
+    "AudioSwitcher.AudioApi/4.0.0-alpha5": {
+      "sha512": "OQYsA5cl/hqzR8wQpOQyXnBrW7NaSXZr8LmAMUMUs/MVciCNxFXkcF6E5SlaeuxAJrj+orWmd888DTvLs68+BA==",
+      "type": "package",
+      "path": "audioswitcher.audioapi/4.0.0-alpha5",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "audioswitcher.audioapi.4.0.0-alpha5.nupkg.sha512",
+        "audioswitcher.audioapi.nuspec",
+        "lib/net40/AudioSwitcher.AudioApi.dll",
+        "lib/net45/AudioSwitcher.AudioApi.dll"
+      ]
+    },
+    "AudioSwitcher.AudioApi.CoreAudio/4.0.0-alpha5": {
+      "sha512": "/qBaRLxeH0pE42rk+0lqVbzMmmsJodGY3Y8Tq5kAIUViSlIIJguYvma63YEBNMMzGBf3l5PBSphIxslIo33WFA==",
+      "type": "package",
+      "path": "audioswitcher.audioapi.coreaudio/4.0.0-alpha5",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "audioswitcher.audioapi.coreaudio.4.0.0-alpha5.nupkg.sha512",
+        "audioswitcher.audioapi.coreaudio.nuspec",
+        "lib/net40/AudioSwitcher.AudioApi.CoreAudio.dll",
+        "lib/net45/AudioSwitcher.AudioApi.CoreAudio.dll"
+      ]
+    },
     "Microsoft.Extensions.Configuration/9.0.0": {
       "sha512": "YIMO9T3JL8MeEXgVozKt2v79hquo/EFtnY0vgxmLnUvk1Rei/halI7kOWZL2RBeV9FMGzgM9LZA8CVaNwFMaNA==",
       "type": "package",
@@ -2389,6 +2451,8 @@
   },
   "projectFileDependencyGroups": {
     "net9.0": [
+      "AudioSwitcher.AudioApi >= 4.0.0-alpha5",
+      "AudioSwitcher.AudioApi.CoreAudio >= 4.0.0-alpha5",
       "Microsoft.Extensions.Hosting >= 9.0.0",
       "Microsoft.Extensions.Hosting.Systemd >= 9.0.0",
       "Microsoft.Extensions.Hosting.WindowsServices >= 9.0.0",
@@ -2396,24 +2460,25 @@
     ]
   },
   "packageFolders": {
-    "/home/ehsant/.nuget/packages/": {}
+    "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
+      "projectUniqueName": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
       "projectName": "SelfcareService",
-      "projectPath": "/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
-      "packagesPath": "/home/ehsant/.nuget/packages/",
-      "outputPath": "/home/ehsant/Documents/GitHub/selfcare-service/SelfcareService/obj/",
+      "projectPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
+      "packagesPath": "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/",
+      "outputPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/ehsant/.nuget/NuGet/NuGet.Config"
+        "/home/ehsan.tor@mtnirancell.ir/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
+        "/usr/lib64/dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -2438,6 +2503,14 @@
       "net9.0": {
         "targetAlias": "net9.0",
         "dependencies": {
+          "AudioSwitcher.AudioApi": {
+            "target": "Package",
+            "version": "[4.0.0-alpha5, )"
+          },
+          "AudioSwitcher.AudioApi.CoreAudio": {
+            "target": "Package",
+            "version": "[4.0.0-alpha5, )"
+          },
           "Microsoft.Extensions.Hosting": {
             "target": "Package",
             "version": "[9.0.0, )"
@@ -2468,10 +2541,6 @@
         "warn": true,
         "downloadDependencies": [
           {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[9.0.7, 9.0.7]"
-          },
-          {
             "name": "Microsoft.AspNetCore.App.Runtime.linux-x64",
             "version": "[9.0.7, 9.0.7]"
           },
@@ -2489,7 +2558,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.108/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.108/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {
@@ -2497,5 +2566,27 @@
         "#import": []
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'AudioSwitcher.AudioApi 4.0.0-alpha5' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net9.0'. This package may not be fully compatible with your project.",
+      "libraryId": "AudioSwitcher.AudioApi",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'AudioSwitcher.AudioApi.CoreAudio 4.0.0-alpha5' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net9.0'. This package may not be fully compatible with your project.",
+      "libraryId": "AudioSwitcher.AudioApi.CoreAudio",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    }
+  ]
 }

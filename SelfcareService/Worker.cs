@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Globalization;
+using AudioSwitcher.AudioApi.CoreAudio;
 
 namespace SelfcareService;
 
@@ -252,6 +253,7 @@ public class Worker : BackgroundService
                 "RunCommand" => await HandleRunCommand(serviceRequest.Command, serviceRequest.Arguments),
                 "GetSystemStatus" => await HandleSystemStatus(),
                 "CheckPrivileges" => await HandleCheckPrivileges(),
+                "AudioMethod" => await HandleAudioControl(serviceRequest.Command, serviceRequest.Arguments),
                 _ => JsonSerializer.Serialize(new ServiceResponse 
                 { 
                     Success = false, 
@@ -368,6 +370,162 @@ public class Worker : BackgroundService
             Message = isElevated ? "Running with elevated privileges" : "Running with normal privileges",
             Output = isElevated.ToString().ToLower()
         });
+    }
+
+    private async Task<string> HandleAudioControl(string? method, string? arguments)
+    {
+        try
+        {
+            // Only available on Windows
+            if (!OperatingSystem.IsWindows())
+            {
+                return JsonSerializer.Serialize(new ServiceResponse
+                {
+                    Success = false,
+                    Message = "Audio control is only available on Windows",
+                    Output = ""
+                });
+            }
+
+            var controller = new CoreAudioController();
+            var playbackDevice = controller.DefaultPlaybackDevice;
+            var captureDevice = controller.DefaultCaptureDevice;
+
+            switch (method)
+            {
+                case "GetOutputVolume":
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Output volume retrieved",
+                        Output = playbackDevice.Volume.ToString()
+                    });
+
+                case "GetInputVolume":
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Input volume retrieved",
+                        Output = captureDevice.Volume.ToString()
+                    });
+
+                case "IsOutputMute":
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Output mute status retrieved",
+                        Output = playbackDevice.IsMuted.ToString().ToLower()
+                    });
+
+                case "IsInputMute":
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Input mute status retrieved",
+                        Output = captureDevice.IsMuted.ToString().ToLower()
+                    });
+
+                case "SetUnmuteAll":
+                    await playbackDevice.SetMuteAsync(false);
+                    await captureDevice.SetMuteAsync(false);
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "All devices unmuted",
+                        Output = "unmuted"
+                    });
+
+                case "SetOutputVolume":
+                    if (double.TryParse(arguments, out double outputVolume) && outputVolume >= 0 && outputVolume <= 100)
+                    {
+                        await playbackDevice.SetVolumeAsync(outputVolume);
+                        return JsonSerializer.Serialize(new ServiceResponse
+                        {
+                            Success = true,
+                            Message = $"Output volume set to {outputVolume}%",
+                            Output = outputVolume.ToString()
+                        });
+                    }
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = false,
+                        Message = "Invalid volume level. Must be between 0 and 100.",
+                        Output = ""
+                    });
+
+                case "SetInputVolume":
+                    if (double.TryParse(arguments, out double inputVolume) && inputVolume >= 0 && inputVolume <= 100)
+                    {
+                        await captureDevice.SetVolumeAsync(inputVolume);
+                        return JsonSerializer.Serialize(new ServiceResponse
+                        {
+                            Success = true,
+                            Message = $"Input volume set to {inputVolume}%",
+                            Output = inputVolume.ToString()
+                        });
+                    }
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = false,
+                        Message = "Invalid volume level. Must be between 0 and 100.",
+                        Output = ""
+                    });
+
+                case "MuteOutput":
+                    await playbackDevice.SetMuteAsync(true);
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Output muted",
+                        Output = "muted"
+                    });
+
+                case "MuteInput":
+                    await captureDevice.SetMuteAsync(true);
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Input muted",
+                        Output = "muted"
+                    });
+
+                case "UnmuteOutput":
+                    await playbackDevice.SetMuteAsync(false);
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Output unmuted",
+                        Output = "unmuted"
+                    });
+
+                case "UnmuteInput":
+                    await captureDevice.SetMuteAsync(false);
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = true,
+                        Message = "Input unmuted",
+                        Output = "unmuted"
+                    });
+
+                default:
+                    return JsonSerializer.Serialize(new ServiceResponse
+                    {
+                        Success = false,
+                        Message = $"Unknown audio method: {method}",
+                        Output = ""
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in HandleAudioControl for method {method}");
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = false,
+                Message = $"Audio control error: {ex.Message}",
+                Output = ""
+            });
+        }
     }
 
     private bool IsRunningElevated()

@@ -9,6 +9,8 @@
     ".NETCoreApp,Version=v9.0/win-x64": {
       "SelfcareService/1.0.0": {
         "dependencies": {
+          "AudioSwitcher.AudioApi": "4.0.0-alpha5",
+          "AudioSwitcher.AudioApi.CoreAudio": "4.0.0-alpha5",
           "Microsoft.Extensions.Hosting": "9.0.0",
           "Microsoft.Extensions.Hosting.Systemd": "9.0.0",
           "Microsoft.Extensions.Hosting.WindowsServices": "9.0.0",
@@ -746,6 +748,22 @@
           }
         }
       },
+      "AudioSwitcher.AudioApi/4.0.0-alpha5": {
+        "runtime": {
+          "lib/net45/AudioSwitcher.AudioApi.dll": {
+            "assemblyVersion": "4.0.0.308",
+            "fileVersion": "4.0.0.308"
+          }
+        }
+      },
+      "AudioSwitcher.AudioApi.CoreAudio/4.0.0-alpha5": {
+        "runtime": {
+          "lib/net45/AudioSwitcher.AudioApi.CoreAudio.dll": {
+            "assemblyVersion": "4.0.0.308",
+            "fileVersion": "4.0.0.308"
+          }
+        }
+      },
       "Microsoft.Extensions.Configuration/9.0.0": {
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "9.0.0",
@@ -1165,6 +1183,20 @@
       "type": "runtimepack",
       "serviceable": false,
       "sha512": ""
+    },
+    "AudioSwitcher.AudioApi/4.0.0-alpha5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OQYsA5cl/hqzR8wQpOQyXnBrW7NaSXZr8LmAMUMUs/MVciCNxFXkcF6E5SlaeuxAJrj+orWmd888DTvLs68+BA==",
+      "path": "audioswitcher.audioapi/4.0.0-alpha5",
+      "hashPath": "audioswitcher.audioapi.4.0.0-alpha5.nupkg.sha512"
+    },
+    "AudioSwitcher.AudioApi.CoreAudio/4.0.0-alpha5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/qBaRLxeH0pE42rk+0lqVbzMmmsJodGY3Y8Tq5kAIUViSlIIJguYvma63YEBNMMzGBf3l5PBSphIxslIo33WFA==",
+      "path": "audioswitcher.audioapi.coreaudio/4.0.0-alpha5",
+      "hashPath": "audioswitcher.audioapi.coreaudio.4.0.0-alpha5.nupkg.sha512"
     },
     "Microsoft.Extensions.Configuration/9.0.0": {
       "type": "package",
