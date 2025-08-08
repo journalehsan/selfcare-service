@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SelfcareService")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6467283225716628e3c7fe1b55f0e9b18c774bb3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+051eb71645670f9920d5448c88228ab1380baf9e")]
 [assembly: System.Reflection.AssemblyProductAttribute("SelfcareService")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SelfcareService")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

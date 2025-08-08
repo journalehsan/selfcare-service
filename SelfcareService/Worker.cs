@@ -7,6 +7,12 @@ using System.Security.Cryptography;
 using System.Globalization;
 using AudioSwitcher.AudioApi.CoreAudio;
 
+#if WINDOWS
+using System.Management;
+using System.Windows.Forms;
+using System.Drawing;
+#endif
+
 namespace SelfcareService;
 
 public class Worker : BackgroundService
@@ -15,10 +21,13 @@ public class Worker : BackgroundService
     private TcpListener? _tcpListener;
     private int _port = 8080;
     private SecureAuthenticator? _secureAuth;
+    private Timer? _uptimeMonitorTimer;
+    private UptimeMonitor _uptimeMonitor;
 
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
+        _uptimeMonitor = new UptimeMonitor(_logger);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -34,6 +43,9 @@ public class Worker : BackgroundService
 
         // Write port to file for Rust binaries to discover
         await WritePortFile();
+
+        // Start uptime monitoring
+        StartUptimeMonitoring();
 
         // Start accepting connections
         while (!stoppingToken.IsCancellationRequested)
@@ -254,6 +266,9 @@ public class Worker : BackgroundService
                 "GetSystemStatus" => await HandleSystemStatus(),
                 "CheckPrivileges" => await HandleCheckPrivileges(),
                 "AudioMethod" => await HandleAudioControl(serviceRequest.Command, serviceRequest.Arguments),
+                "UptimeCheck" => await HandleUptimeCheck(),
+                "ShowRebootWarning" => await HandleShowRebootWarning(),
+                "GetUptimeStatus" => await HandleGetUptimeStatus(),
                 _ => JsonSerializer.Serialize(new ServiceResponse 
                 { 
                     Success = false, 
@@ -550,10 +565,115 @@ public class Worker : BackgroundService
         }
     }
 
+    private void StartUptimeMonitoring()
+    {
+        // Start monitoring timer (check every 30 minutes)
+        _uptimeMonitorTimer = new Timer(async _ => await CheckUptimeAndShowWarning(), 
+            null, TimeSpan.Zero, TimeSpan.FromMinutes(30));
+        _logger.LogInformation("Uptime monitoring started (30-minute intervals)");
+    }
+
+    private async Task CheckUptimeAndShowWarning()
+    {
+        try
+        {
+            await _uptimeMonitor.CheckUptimeAndShowWarning();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in uptime monitoring");
+        }
+    }
+
+    private async Task<string> HandleUptimeCheck()
+    {
+        try
+        {
+            var uptime = _uptimeMonitor.GetSystemUptime();
+            var uptimeInfo = new
+            {
+                TotalSeconds = uptime.TotalSeconds,
+                Days = uptime.Days,
+                Hours = uptime.Hours,
+                Minutes = uptime.Minutes,
+                FormattedUptime = _uptimeMonitor.GetFormattedUptime(),
+                ShouldShowWarning = _uptimeMonitor.ShouldShowWarning()
+            };
+
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = true,
+                Message = "Uptime information retrieved",
+                Output = JsonSerializer.Serialize(uptimeInfo)
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting uptime information");
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = false,
+                Message = ex.Message,
+                Output = ""
+            });
+        }
+    }
+
+    private async Task<string> HandleShowRebootWarning()
+    {
+        try
+        {
+            var result = await _uptimeMonitor.ShowRebootWarningDialog();
+            
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = true,
+                Message = "Reboot warning dialog shown",
+                Output = JsonSerializer.Serialize(new { UserChoice = result })
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing reboot warning");
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = false,
+                Message = ex.Message,
+                Output = ""
+            });
+        }
+    }
+
+    private async Task<string> HandleGetUptimeStatus()
+    {
+        try
+        {
+            var status = _uptimeMonitor.GetUptimeStatus();
+            
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = true,
+                Message = "Uptime status retrieved",
+                Output = JsonSerializer.Serialize(status)
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting uptime status");
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = false,
+                Message = ex.Message,
+                Output = ""
+            });
+        }
+    }
+
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Selfcare Service stopping...");
         
+        _uptimeMonitorTimer?.Dispose();
         _tcpListener?.Stop();
         
         // Clean up port file

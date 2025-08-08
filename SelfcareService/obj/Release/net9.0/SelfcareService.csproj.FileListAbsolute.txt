@@ -104,3 +104,5 @@
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/Release/net9.0/SelfcareService.pdb
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/Release/net9.0/SelfcareService.genruntimeconfig.cache
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/Release/net9.0/ref/SelfcareService.dll
+/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/AudioSwitcher.AudioApi.dll
+/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/AudioSwitcher.AudioApi.CoreAudio.dll

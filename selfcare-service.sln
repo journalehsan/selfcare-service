@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SelfCareUptimeWatcher", "SelfCareUptimeWatcher.csproj", "{B08ABDAE-530E-6F14-E49C-9EC73266CF70}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SelfcareService", "SelfcareService\SelfcareService.csproj", "{1C58B9FA-EDD6-93B8-B5CB-DDE47AD556EC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B08ABDAE-530E-6F14-E49C-9EC73266CF70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B08ABDAE-530E-6F14-E49C-9EC73266CF70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B08ABDAE-530E-6F14-E49C-9EC73266CF70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B08ABDAE-530E-6F14-E49C-9EC73266CF70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C58B9FA-EDD6-93B8-B5CB-DDE47AD556EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C58B9FA-EDD6-93B8-B5CB-DDE47AD556EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C58B9FA-EDD6-93B8-B5CB-DDE47AD556EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C58B9FA-EDD6-93B8-B5CB-DDE47AD556EC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A9184CD-9CFC-46ED-A22E-A0D18DEB2761}
+	EndGlobalSection
+EndGlobal

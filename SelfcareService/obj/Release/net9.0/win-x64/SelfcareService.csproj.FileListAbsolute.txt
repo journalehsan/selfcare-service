@@ -470,3 +470,7 @@
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/Release/net9.0/win-x64/ref/SelfcareService.dll
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/AudioSwitcher.AudioApi.dll
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/AudioSwitcher.AudioApi.CoreAudio.dll
+/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/dist/linux-x64/appsettings.Development.json
+/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/dist/linux-x64/appsettings.json
+/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/dist/linux-x64/SelfcareService.deps.json
+/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/dist/linux-x64/SelfcareService.runtimeconfig.json

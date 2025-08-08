@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "mnCd9iNnPcs=",
+  "dgSpecHash": "PLvduhqanT0=",
   "success": true,
   "projectFilePath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
   "expectedPackageFiles": [
@@ -37,10 +37,7 @@
     "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/microsoft.extensions.primitives/9.0.0/microsoft.extensions.primitives.9.0.0.nupkg.sha512",
     "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/system.diagnostics.eventlog/9.0.0/system.diagnostics.eventlog.9.0.0.nupkg.sha512",
     "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/system.serviceprocess.servicecontroller/9.0.0/system.serviceprocess.servicecontroller.9.0.0.nupkg.sha512",
-    "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/system.text.json/9.0.0/system.text.json.9.0.0.nupkg.sha512",
-    "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/microsoft.netcore.app.runtime.linux-x64/9.0.7/microsoft.netcore.app.runtime.linux-x64.9.0.7.nupkg.sha512",
-    "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-x64/9.0.7/microsoft.aspnetcore.app.runtime.linux-x64.9.0.7.nupkg.sha512",
-    "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/microsoft.netcore.app.host.linux-x64/9.0.7/microsoft.netcore.app.host.linux-x64.9.0.7.nupkg.sha512"
+    "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/system.text.json/9.0.0/system.text.json.9.0.0.nupkg.sha512"
   ],
   "logs": [
     {
