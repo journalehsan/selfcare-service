@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "PLvduhqanT0=",
+  "dgSpecHash": "CnjSk0CbXZw=",
   "success": true,
-  "projectFilePath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
+  "projectFilePath": "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/SelfcareService.csproj",
   "expectedPackageFiles": [
     "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/audioswitcher.audioapi/4.0.0-alpha5/audioswitcher.audioapi.4.0.0-alpha5.nupkg.sha512",
     "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/audioswitcher.audioapi.coreaudio/4.0.0-alpha5/audioswitcher.audioapi.coreaudio.4.0.0-alpha5.nupkg.sha512",

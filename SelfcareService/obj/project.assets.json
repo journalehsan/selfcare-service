@@ -1778,11 +1778,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
+      "projectUniqueName": "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/SelfcareService.csproj",
       "projectName": "SelfcareService",
-      "projectPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
+      "projectPath": "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/SelfcareService.csproj",
       "packagesPath": "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/",
-      "outputPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/",
+      "outputPath": "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/ehsan.tor@mtnirancell.ir/.nuget/NuGet/NuGet.Config"
