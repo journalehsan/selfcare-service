@@ -13,12 +13,12 @@ namespace SelfcareService;
 public class WmiQueryHandler
 {
     private readonly ILogger<WmiQueryHandler> _logger;
-    
+
     public WmiQueryHandler(ILogger<WmiQueryHandler> logger)
     {
         _logger = logger;
     }
-    
+
     /// <summary>
     /// Process a WMI query request with headers
     /// </summary>
@@ -37,16 +37,16 @@ public class WmiQueryHandler
                     Format = headers.GetValueOrDefault("format", "text")
                 };
             }
-            
+
             var format = headers.GetValueOrDefault("format", "text").ToLower();
             var timeout = int.Parse(headers.GetValueOrDefault("timeout", "30"));
             var maxResults = int.Parse(headers.GetValueOrDefault("max_results", "1000"));
-            
+
             _logger.LogInformation($"Executing WMI query: {query} (format: {format}, timeout: {timeout}s)");
-            
+
             // Execute WMI query
             var results = await ExecuteWmiQuery(query, timeout, maxResults);
-            
+
             // Format results based on requested format
             string formattedData = format switch
             {
@@ -54,7 +54,7 @@ public class WmiQueryHandler
                 "csv" => FormatAsCsv(results),
                 _ => FormatAsText(results)
             };
-            
+
             return new WmiQueryResponse
             {
                 Success = true,
@@ -65,7 +65,7 @@ public class WmiQueryHandler
                 QueryTime = DateTime.UtcNow
             };
         }
-        #if WINDOWS
+#if WINDOWS
         catch (ManagementException ex)
         {
             _logger.LogError(ex, $"WMI query failed: {query}");
@@ -77,7 +77,7 @@ public class WmiQueryHandler
                 Format = headers.GetValueOrDefault("format", "text")
             };
         }
-        #endif
+#endif
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Unexpected error executing WMI query: {query}");
@@ -90,29 +90,29 @@ public class WmiQueryHandler
             };
         }
     }
-    
+
     private async Task<List<Dictionary<string, object>>> ExecuteWmiQuery(string query, int timeoutSeconds, int maxResults)
     {
         var results = new List<Dictionary<string, object>>();
-        
-        #if WINDOWS
+
+#if WINDOWS
         return await Task.Run(() =>
         {
             using var searcher = new ManagementObjectSearcher(query);
             searcher.Options.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
-            
+
             int count = 0;
             foreach (ManagementObject obj in searcher.Get())
             {
                 if (count >= maxResults) break;
-                
+
                 var item = new Dictionary<string, object>();
                 foreach (PropertyData prop in obj.Properties)
                 {
                     try
                     {
                         var value = prop.Value;
-                        
+
                         // Handle special data types
                         if (value is ManagementBaseObject[] array)
                         {
@@ -130,7 +130,7 @@ public class WmiQueryHandler
                         {
                             value = dt.ToString("yyyy-MM-dd HH:mm:ss");
                         }
-                        
+
                         item[prop.Name] = value ?? "null";
                     }
                     catch (Exception ex)
@@ -142,14 +142,14 @@ public class WmiQueryHandler
                 results.Add(item);
                 count++;
             }
-            
+
             return results;
         });
-        #else
+#else
         return await Task.FromResult(results);
-        #endif
+#endif
     }
-    
+
     private string FormatAsJson(List<Dictionary<string, object>> results)
     {
         var options = new JsonSerializerOptions
@@ -158,14 +158,14 @@ public class WmiQueryHandler
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
-        
+
         return JsonSerializer.Serialize(results, options);
     }
-    
+
     private string FormatAsText(List<Dictionary<string, object>> results)
     {
         var sb = new StringBuilder();
-        
+
         foreach (var item in results)
         {
             sb.AppendLine(new string('-', 50));
@@ -174,29 +174,29 @@ public class WmiQueryHandler
                 sb.AppendLine($"{kvp.Key}: {kvp.Value}");
             }
         }
-        
+
         if (results.Count == 0)
         {
             sb.AppendLine("No results found.");
         }
-        
+
         return sb.ToString();
     }
-    
+
     private string FormatAsCsv(List<Dictionary<string, object>> results)
     {
         if (results.Count == 0) return "No results";
-        
+
         var sb = new StringBuilder();
-        
+
         // Header
         var headers = results.First().Keys;
         sb.AppendLine(string.Join(",", headers.Select(h => $"\"{h}\"")));
-        
+
         // Data rows
         foreach (var item in results)
         {
-            var values = headers.Select(h => 
+            var values = headers.Select(h =>
             {
                 var value = item.GetValueOrDefault(h, "")?.ToString() ?? "";
                 // Escape CSV special characters
@@ -208,10 +208,10 @@ public class WmiQueryHandler
             });
             sb.AppendLine(string.Join(",", values));
         }
-        
+
         return sb.ToString();
     }
-    
+
     /// <summary>
     /// Validate if a WMI query is safe to execute
     /// </summary>
@@ -220,10 +220,55 @@ public class WmiQueryHandler
         // Basic validation - can be extended
         var dangerousKeywords = new[] { "DELETE", "UPDATE", "INSERT", "DROP", "CREATE", "ALTER" };
         var upperQuery = query.ToUpper();
-        
+
         return !dangerousKeywords.Any(keyword => upperQuery.Contains(keyword));
     }
-    
+
+    /// <summary>
+    /// Get domain information for the current computer
+    /// </summary>
+    public async Task<WmiQueryResponse> GetDomainInfo()
+    {
+        var query = "SELECT Domain, PartOfDomain, Name FROM Win32_ComputerSystem";
+        var headers = new Dictionary<string, string> { ["format"] = "json" };
+        return await ProcessWmiQuery(query, headers);
+    }
+
+    /// <summary>
+    /// Check if computer is joined to a specific domain
+    /// </summary>
+    public async Task<bool> IsJoinedToDomain(string domainName)
+    {
+        try
+        {
+            var domainInfo = await GetDomainInfo();
+            if (!domainInfo.Success || string.IsNullOrEmpty(domainInfo.Data))
+            {
+                return false;
+            }
+
+            var results = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(domainInfo.Data);
+            if (results?.Count > 0)
+            {
+                var computerInfo = results[0];
+                if (computerInfo.TryGetValue("domain", out var domain) &&
+                    computerInfo.TryGetValue("partOfDomain", out var partOfDomain))
+                {
+                    var domainStr = domain?.ToString() ?? "";
+                    var isPartOfDomain = partOfDomain is JsonElement element && element.GetBoolean();
+
+                    return isPartOfDomain && domainStr.ToLower().Contains(domainName.ToLower());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error checking domain membership for {domainName}");
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Get common WMI query templates
     /// </summary>
@@ -240,7 +285,8 @@ public class WmiQueryHandler
             ["startup"] = "SELECT * FROM Win32_StartupCommand",
             ["hotfix"] = "SELECT * FROM Win32_QuickFixEngineering",
             ["users"] = "SELECT * FROM Win32_UserAccount WHERE LocalAccount = true",
-            ["shares"] = "SELECT * FROM Win32_Share"
+            ["shares"] = "SELECT * FROM Win32_Share",
+            ["domain"] = "SELECT Domain, PartOfDomain, Name FROM Win32_ComputerSystem"
         };
     }
 }
@@ -265,12 +311,12 @@ public class WmiQueryRequest
 {
     public Dictionary<string, string> Headers { get; set; } = new();
     public string Query { get; set; } = "";
-    
+
     public static WmiQueryRequest Parse(string message)
     {
         var request = new WmiQueryRequest();
         var lines = message.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-        
+
         int i = 0;
         // Parse headers
         for (; i < lines.Length; i++)
@@ -281,7 +327,7 @@ public class WmiQueryRequest
                 i++;
                 break; // Empty line indicates end of headers
             }
-            
+
             if (line.StartsWith("HEADER:"))
             {
                 var headerContent = line.Substring(7);
@@ -292,13 +338,13 @@ public class WmiQueryRequest
                 }
             }
         }
-        
+
         // The rest is the query
         if (i < lines.Length)
         {
             request.Query = string.Join("\n", lines.Skip(i));
         }
-        
+
         return request;
     }
 }

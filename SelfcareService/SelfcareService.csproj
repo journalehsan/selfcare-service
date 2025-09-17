@@ -9,8 +9,13 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <TargetFramework>net9.0-windows</TargetFramework>
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
     <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64' OR '$(RuntimeIdentifier)' == 'win-x86' OR '$(RuntimeIdentifier)' == 'win-arm64'">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,11 +23,17 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
-    <PackageReference Include="AudioSwitcher.AudioApi" Version="4.0.0-alpha5" />
-    <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio" Version="4.0.0-alpha5" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT' OR '$(RuntimeIdentifier)' == 'win-x64' OR '$(RuntimeIdentifier)' == 'win-x86' OR '$(RuntimeIdentifier)' == 'win-arm64'">
     <PackageReference Include="System.Management" Version="7.0.2" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.0" />
+    <PackageReference Include="AudioSwitcher.AudioApi" Version="4.0.0-alpha5">
+      <NoWarn>NU1701</NoWarn>
+    </PackageReference>
+    <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio" Version="4.0.0-alpha5">
+      <NoWarn>NU1701</NoWarn>
+    </PackageReference>
   </ItemGroup>
+
 </Project>

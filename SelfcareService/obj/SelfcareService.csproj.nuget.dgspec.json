@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/SelfcareService.csproj": {}
+    "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj": {}
   },
   "projects": {
-    "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/SelfcareService.csproj": {
+    "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/SelfcareService.csproj",
+        "projectUniqueName": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
         "projectName": "SelfcareService",
-        "projectPath": "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/SelfcareService.csproj",
+        "projectPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
         "packagesPath": "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/",
-        "outputPath": "/home/ehsan.tor@mtnirancell.ir/Documents/selfcare/service/SelfcareService/obj/",
+        "outputPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/ehsan.tor@mtnirancell.ir/.nuget/NuGet/NuGet.Config"
@@ -47,11 +47,17 @@
           "dependencies": {
             "AudioSwitcher.AudioApi": {
               "target": "Package",
-              "version": "[4.0.0-alpha5, )"
+              "version": "[4.0.0-alpha5, )",
+              "noWarn": [
+                "NU1701"
+              ]
             },
             "AudioSwitcher.AudioApi.CoreAudio": {
               "target": "Package",
-              "version": "[4.0.0-alpha5, )"
+              "version": "[4.0.0-alpha5, )",
+              "noWarn": [
+                "NU1701"
+              ]
             },
             "Microsoft.Extensions.Hosting": {
               "target": "Package",
@@ -64,6 +70,14 @@
             "Microsoft.Extensions.Hosting.WindowsServices": {
               "target": "Package",
               "version": "[9.0.0, )"
+            },
+            "System.Diagnostics.PerformanceCounter": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "System.Management": {
+              "target": "Package",
+              "version": "[7.0.2, )"
             },
             "System.Text.Json": {
               "target": "Package",
@@ -81,12 +95,31 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[9.0.8, 9.0.8]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.8, 9.0.8]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.win-x64",
+              "version": "[9.0.8, 9.0.8]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.108/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.109/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

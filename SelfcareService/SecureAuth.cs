@@ -165,7 +165,7 @@ public class SecureAuthenticator
         var storageKey = DeriveStorageKey();
 
         // Encrypt the actual key
-        using var aes = new AesGcm(storageKey);
+        using var aes = new AesGcm(storageKey, 16); // Specify tag size of 16 bytes
         var encryptedKey = new byte[key.Length];
         var tag = new byte[16];
         
@@ -219,7 +219,7 @@ public class SecureAuthenticator
     {
         var storageKey = DeriveStorageKey();
         
-        using var aes = new AesGcm(storageKey);
+        using var aes = new AesGcm(storageKey, 16); // Specify tag size of 16 bytes
         
         var encryptedKeyWithTag = authData.EncryptedKey;
         var encryptedKey = encryptedKeyWithTag[..^16];
@@ -251,7 +251,7 @@ public class SecureAuthenticator
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(nonce);
 
-        using var aes = new AesGcm(encryptionKey);
+        using var aes = new AesGcm(encryptionKey, 16); // Specify tag size of 16 bytes
         var encrypted = new byte[Encoding.UTF8.GetBytes(payload).Length];
         var tag = new byte[16];
         
@@ -283,7 +283,7 @@ public class SecureAuthenticator
             var tag = encryptedWithTag[^16..];
 
             // Decrypt
-            using var aes = new AesGcm(encryptionKey);
+            using var aes = new AesGcm(encryptionKey, 16); // Specify tag size of 16 bytes
             var decrypted = new byte[encrypted.Length];
             aes.Decrypt(nonce, encrypted, tag, decrypted);
 

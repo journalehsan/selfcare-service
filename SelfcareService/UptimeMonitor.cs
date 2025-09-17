@@ -1,10 +1,13 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Runtime.InteropServices;
 
 #if WINDOWS
 using System.Management;
+#if NETFRAMEWORK || NET5_0_WINDOWS || NET6_0_WINDOWS || NET7_0_WINDOWS || NET8_0_WINDOWS || NET9_0_WINDOWS
 using System.Windows.Forms;
 using System.Drawing;
+#endif
 using Microsoft.Win32;
 #endif
 
@@ -12,8 +15,13 @@ namespace SelfcareService;
 
 public class UptimeMonitor
 {
+#if WINDOWS
+    [DllImport("kernel32.dll")]
+    private static extern ulong GetTickCount64();
+#endif
+
     private readonly ILogger _logger;
-    private UptimeSkipState _state;
+    private UptimeSkipState _state = new UptimeSkipState();
     private readonly string _stateFilePath;
 
     private const int UPTIME_THRESHOLD_HOURS = 12;
@@ -32,6 +40,12 @@ public class UptimeMonitor
             var uptime = GetSystemUptime();
             _logger.LogInformation($"Current system uptime: {uptime.Days} days, {uptime.Hours} hours, {uptime.Minutes} minutes");
 
+            if (uptime == TimeSpan.Zero)
+            {
+                _logger.LogError("Failed to get system uptime - all detection methods failed");
+                return;
+            }
+
             if (!ShouldShowWarning())
             {
                 return;
@@ -42,31 +56,46 @@ public class UptimeMonitor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in uptime check");
+            _logger.LogError(ex, "Error in uptime check: {ErrorMessage}", ex.Message);
         }
     }
 
     public bool ShouldShowWarning()
     {
-        var uptime = GetSystemUptime();
-        
-        // Check if uptime exceeds threshold
-        if (uptime.TotalHours < UPTIME_THRESHOLD_HOURS)
+        try
         {
+            var uptime = GetSystemUptime();
+
+            // If we can't get uptime, don't show warning
+            if (uptime == TimeSpan.Zero)
+            {
+                _logger.LogWarning("Cannot determine if warning should be shown - uptime detection failed");
+                return false;
+            }
+
+            // Check if uptime exceeds threshold
+            if (uptime.TotalHours < UPTIME_THRESHOLD_HOURS)
+            {
+                return false;
+            }
+
+            // Check if we're still in skip period
+            if (_state.LastSkipTime.HasValue && _state.LastSkipDuration.HasValue)
+            {
+                var skipEndTime = _state.LastSkipTime.Value.AddSeconds(_state.LastSkipDuration.Value.ToSeconds());
+                if (DateTime.UtcNow < skipEndTime)
+                {
+                    return false; // Still in skip period
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error determining if warning should be shown: {ErrorMessage}", ex.Message);
             return false;
         }
-
-        // Check if we're still in skip period
-        if (_state.LastSkipTime.HasValue && _state.LastSkipDuration.HasValue)
-        {
-            var skipEndTime = _state.LastSkipTime.Value.AddSeconds(_state.LastSkipDuration.Value.ToSeconds());
-            if (DateTime.UtcNow < skipEndTime)
-            {
-                return false; // Still in skip period
-            }
-        }
-
-        return true;
     }
 
     public async Task<string> ShowRebootWarningDialog()
@@ -102,7 +131,7 @@ public class UptimeMonitor
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing Windows dialog");
-            
+
             // Fallback: Record default skip
             RecordSkip(SkipDuration.Minutes10);
             return "skip_10min";
@@ -113,12 +142,12 @@ public class UptimeMonitor
     {
         try
         {
-            string message = uptime.Days > 0 
+            string message = uptime.Days > 0
                 ? $"System Uptime Warning\\n\\nYour system has been running for {uptime.Days} days and {uptime.Hours} hours.\\n\\nRegular reboots help maintain system stability and apply important updates.\\n\\nThis is alert #{_state.AlertCount + 1}. Available skip options are being reduced.\\n\\nWould you like to reboot now?"
                 : $"System Uptime Warning\\n\\nYour system has been running for {uptime.Hours} hours and {uptime.Minutes} minutes.\\n\\nRegular reboots help maintain system stability and apply important updates.\\n\\nThis is alert #{_state.AlertCount + 1}. Available skip options are being reduced.\\n\\nWould you like to reboot now?";
 
             // Create VBScript with multiple buttons
-            var skipButtons = string.Join("", availableOptions.Select((option, index) => 
+            var skipButtons = string.Join("", availableOptions.Select((option, index) =>
                 $"If intResult = {index + 7} Then\\n    WScript.Echo \"skip_{option.ToString().ToLower()}\"\\nEnd If\\n"));
 
             string vbScript = $@"
@@ -175,12 +204,12 @@ End If
     {
         try
         {
-            string message = uptime.Days > 0 
+            string message = uptime.Days > 0
                 ? $"System has been running for {uptime.Days} days and {uptime.Hours} hours. Regular reboots help maintain stability. This is alert #{_state.AlertCount + 1}."
                 : $"System has been running for {uptime.Hours} hours and {uptime.Minutes} minutes. Regular reboots help maintain stability. This is alert #{_state.AlertCount + 1}.";
 
             // Try different dialog methods
-            var result = await TryZenityDialog(message, availableOptions) 
+            var result = await TryZenityDialog(message, availableOptions)
                       ?? await TryKDialogDialog(message, availableOptions)
                       ?? await TryWhiptailDialog(message, availableOptions)
                       ?? "skip_minutes10";
@@ -239,7 +268,7 @@ End If
             if (result.Contains("10 hours")) return "skip_hours10";
             if (result.Contains("3 hours")) return "skip_hours3";
             if (result.Contains("10 minutes")) return "skip_minutes10";
-            
+
             return "skip_minutes10";
         }
         catch
@@ -254,7 +283,7 @@ End If
         {
             var menuItems = new List<string> { "1", "Reboot Now" };
             int itemId = 2;
-            
+
             foreach (var option in availableOptions)
             {
                 menuItems.Add(itemId.ToString());
@@ -282,7 +311,7 @@ End If
                     return $"skip_{selectedOption.ToString().ToLower()}";
                 }
             }
-            
+
             return "skip_minutes10";
         }
         catch
@@ -297,7 +326,7 @@ End If
         {
             var menuItems = new List<string> { "1", "Reboot Now" };
             int itemId = 2;
-            
+
             foreach (var option in availableOptions)
             {
                 menuItems.Add(itemId.ToString());
@@ -325,7 +354,7 @@ End If
                     return $"skip_{selectedOption.ToString().ToLower()}";
                 }
             }
-            
+
             return "skip_minutes10";
         }
         catch
@@ -360,7 +389,7 @@ End If
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
             process.Start();
-            
+
             _logger.LogInformation("System reboot initiated");
         }
         catch (Exception ex)
@@ -383,7 +412,7 @@ End If
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
             process.Start();
-            
+
             _logger.LogInformation("System reboot initiated (Linux)");
         }
         catch (Exception ex)
@@ -407,38 +436,74 @@ End If
     private TimeSpan GetWindowsUptime()
     {
 #if WINDOWS
+        // Method 1: Try Environment.TickCount64 (most reliable, Windows Vista+)
         try
         {
-            // Method 1: Using WMI
+            long ticks = Environment.TickCount64;
+            var uptime = TimeSpan.FromMilliseconds(ticks);
+            _logger.LogDebug($"Got uptime from Environment.TickCount64: {uptime}");
+            return uptime;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get uptime from Environment.TickCount64");
+        }
+
+        // Method 2: Try WMI with better error handling
+        try
+        {
             using (var searcher = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem"))
             using (var collection = searcher.Get())
             {
                 foreach (ManagementObject obj in collection)
                 {
-                    string lastBootTime = obj["LastBootUpTime"].ToString();
-                    DateTime bootTime = ManagementDateTimeConverter.ToDateTime(lastBootTime);
-                    return DateTime.Now - bootTime;
+                    var lastBootTimeValue = obj["LastBootUpTime"] as string;
+                    if (!string.IsNullOrEmpty(lastBootTimeValue))
+                    {
+                        DateTime bootTime = ManagementDateTimeConverter.ToDateTime(lastBootTimeValue);
+                        var uptime = DateTime.Now - bootTime;
+                        _logger.LogDebug($"Got uptime from WMI: {uptime}");
+                        return uptime;
+                    }
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Fallback: Use Performance Counter
-            try
-            {
-                using (var uptime = new PerformanceCounter("System", "System Up Time"))
-                {
-                    uptime.NextValue(); // First call returns 0
-                    return TimeSpan.FromSeconds(uptime.NextValue());
-                }
-            }
-            catch
-            {
-                _logger.LogWarning("Failed to get uptime from WMI and Performance Counter");
-                return TimeSpan.Zero;
-            }
+            _logger.LogWarning(ex, "Failed to get uptime from WMI: {ErrorMessage}", ex.Message);
         }
 
+        // Method 3: Try GetTickCount64 via P/Invoke (Windows Vista+)
+        try
+        {
+            ulong ticks = GetTickCount64();
+            var uptime = TimeSpan.FromMilliseconds(ticks);
+            _logger.LogDebug($"Got uptime from GetTickCount64: {uptime}");
+            return uptime;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get uptime from GetTickCount64");
+        }
+
+        // Method 4: Fallback to Performance Counter (deprecated but kept for compatibility)
+        try
+        {
+            using (var uptime = new PerformanceCounter("System", "System Up Time"))
+            {
+                uptime.NextValue(); // First call returns 0
+                var uptimeSeconds = uptime.NextValue();
+                var result = TimeSpan.FromSeconds(uptimeSeconds);
+                _logger.LogDebug($"Got uptime from Performance Counter: {result}");
+                return result;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get uptime from Performance Counter: {ErrorMessage}", ex.Message);
+        }
+
+        _logger.LogError("All Windows uptime detection methods failed");
         return TimeSpan.Zero;
 #else
         // On non-Windows, use alternative method
@@ -486,6 +551,12 @@ End If
     public string GetFormattedUptime()
     {
         var uptime = GetSystemUptime();
+
+        if (uptime == TimeSpan.Zero)
+        {
+            return "Unable to determine uptime";
+        }
+
         if (uptime.Days > 0)
         {
             return $"{uptime.Days} days, {uptime.Hours} hours, {uptime.Minutes} minutes";
@@ -503,15 +574,18 @@ End If
     public object GetUptimeStatus()
     {
         var uptime = GetSystemUptime();
+        var uptimeDetectionFailed = uptime == TimeSpan.Zero;
+
         return new
         {
             CurrentUptime = GetFormattedUptime(),
-            TotalHours = uptime.TotalHours,
-            ShouldShowWarning = ShouldShowWarning(),
+            TotalHours = uptimeDetectionFailed ? -1 : uptime.TotalHours,
+            ShouldShowWarning = !uptimeDetectionFailed && ShouldShowWarning(),
             AlertCount = _state.AlertCount,
             LastSkipTime = _state.LastSkipTime,
             LastSkipDuration = _state.LastSkipDuration?.ToDisplayString(),
-            AvailableSkipOptions = GetAvailableSkipOptions().Select(opt => opt.ToDisplayString()).ToArray()
+            AvailableSkipOptions = GetAvailableSkipOptions().Select(opt => opt.ToDisplayString()).ToArray(),
+            UptimeDetectionFailed = uptimeDetectionFailed
         };
     }
 
@@ -534,7 +608,7 @@ End If
             _state.LastSkipTime = DateTime.UtcNow;
             _state.LastSkipDuration = duration;
             SaveState();
-            
+
             _logger.LogInformation($"Recorded skip: {duration.ToDisplayString()}, Alert count: {_state.AlertCount}");
         }
         catch (Exception ex)
