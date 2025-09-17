@@ -397,6 +397,7 @@ public class Worker : BackgroundService
             return serviceRequest?.Type switch
             {
                 "RunCommand" => await HandleRunCommand(serviceRequest.Command, serviceRequest.Arguments),
+                "ExecuteScript" => await HandleExecuteScript(serviceRequest.Command, serviceRequest.Data),
                 "GetSystemStatus" => await HandleSystemStatus(),
                 "CheckPrivileges" => await HandleCheckPrivileges(),
                 "AudioMethod" => await HandleAudioControl(serviceRequest.Command, serviceRequest.Arguments),
@@ -1038,6 +1039,483 @@ public class Worker : BackgroundService
                 Message = ex.Message,
                 Output = ""
             });
+        }
+    }
+
+    private async Task<string> HandleExecuteScript(string? scriptType, string? scriptContent)
+    {
+        if (string.IsNullOrEmpty(scriptType) || string.IsNullOrEmpty(scriptContent))
+        {
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = false,
+                Message = "Script type and content cannot be empty",
+                Output = ""
+            });
+        }
+
+        try
+        {
+            // Create a safe temporary directory for script execution
+            string tempDir = Path.Combine(Path.GetTempPath(), "selfcare_scripts");
+            Directory.CreateDirectory(tempDir);
+
+            // Generate a unique filename based on script type
+            string fileExtension = scriptType.ToLower() switch
+            {
+                "vbscript" => ".vbs",
+                "batch" => ".bat",
+                "powershell" => ".ps1",
+                "python" => ".py",
+                "perl" => ".pl",
+                "bash" => ".sh",
+                "sh" => ".sh",
+                _ => ".tmp"
+            };
+
+            string scriptFileName = $"selfcare_script_{Guid.NewGuid():N}{fileExtension}";
+            string scriptPath = Path.Combine(tempDir, scriptFileName);
+
+            // Write script content to file
+            await File.WriteAllTextAsync(scriptPath, scriptContent, Encoding.UTF8);
+
+            _logger.LogInformation($"Executing {scriptType} script: {scriptPath}");
+
+            // Execute the script based on type
+            var result = scriptType.ToLower() switch
+            {
+                "vbscript" => await ExecuteVBScript(scriptPath),
+                "batch" => await ExecuteBatchScript(scriptPath),
+                "powershell" => await ExecutePowerShellScript(scriptPath),
+                "python" => await ExecutePythonScript(scriptPath),
+                "perl" => await ExecutePerlScript(scriptPath),
+                "bash" or "sh" => await ExecuteShellScript(scriptPath, scriptType),
+                _ => new ServiceResponse
+                {
+                    Success = false,
+                    Message = $"Unsupported script type: {scriptType}",
+                    Output = ""
+                }
+            };
+
+            // Clean up the temporary script file
+            try
+            {
+                if (File.Exists(scriptPath))
+                {
+                    File.Delete(scriptPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, $"Failed to delete temporary script file: {scriptPath}");
+            }
+
+            return JsonSerializer.Serialize(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error executing {scriptType} script");
+            return JsonSerializer.Serialize(new ServiceResponse
+            {
+                Success = false,
+                Message = ex.Message,
+                Output = ""
+            });
+        }
+    }
+
+    private async Task<ServiceResponse> ExecuteVBScript(string scriptPath)
+    {
+        try
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "cscript.exe",
+                Arguments = $"//NoLogo //B \"{scriptPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath)
+            };
+
+            // Set environment variables to suppress VBScript dialogs
+            processInfo.EnvironmentVariables["WSH_BATCH"] = "1";
+
+            using var process = new Process { StartInfo = processInfo };
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) outputBuilder.AppendLine(e.Data);
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) errorBuilder.AppendLine(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            var output = outputBuilder.ToString();
+            var error = errorBuilder.ToString();
+            var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\n{error}";
+
+            return new ServiceResponse
+            {
+                Success = process.ExitCode == 0,
+                Message = process.ExitCode == 0 ? "VBScript executed successfully" : $"VBScript failed with exit code {process.ExitCode}",
+                Output = combinedOutput.Trim(),
+                ExitCode = process.ExitCode
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = $"VBScript execution error: {ex.Message}",
+                Output = ""
+            };
+        }
+    }
+
+    private async Task<ServiceResponse> ExecuteBatchScript(string scriptPath)
+    {
+        try
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c \"{scriptPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath)
+            };
+
+            using var process = new Process { StartInfo = processInfo };
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) outputBuilder.AppendLine(e.Data);
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) errorBuilder.AppendLine(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            var output = outputBuilder.ToString();
+            var error = errorBuilder.ToString();
+            var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\n{error}";
+
+            return new ServiceResponse
+            {
+                Success = process.ExitCode == 0,
+                Message = process.ExitCode == 0 ? "Batch script executed successfully" : $"Batch script failed with exit code {process.ExitCode}",
+                Output = combinedOutput.Trim(),
+                ExitCode = process.ExitCode
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = $"Batch script execution error: {ex.Message}",
+                Output = ""
+            };
+        }
+    }
+
+    private async Task<ServiceResponse> ExecutePowerShellScript(string scriptPath)
+    {
+        try
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath)
+            };
+
+            using var process = new Process { StartInfo = processInfo };
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) outputBuilder.AppendLine(e.Data);
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) errorBuilder.AppendLine(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            var output = outputBuilder.ToString();
+            var error = errorBuilder.ToString();
+            var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\n{error}";
+
+            return new ServiceResponse
+            {
+                Success = process.ExitCode == 0,
+                Message = process.ExitCode == 0 ? "PowerShell script executed successfully" : $"PowerShell script failed with exit code {process.ExitCode}",
+                Output = combinedOutput.Trim(),
+                ExitCode = process.ExitCode
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = $"PowerShell script execution error: {ex.Message}",
+                Output = ""
+            };
+        }
+    }
+
+    private async Task<ServiceResponse> ExecutePythonScript(string scriptPath)
+    {
+        try
+        {
+            // Try to find Python executable
+            string pythonExe = "python";
+            if (OperatingSystem.IsWindows())
+            {
+                // Try common Python installations on Windows
+                var pythonPaths = new[]
+                {
+                    @"C:\Python39\python.exe",
+                    @"C:\Python310\python.exe",
+                    @"C:\Python311\python.exe",
+                    @"C:\Python312\python.exe",
+                    @"C:\Program Files\Python39\python.exe",
+                    @"C:\Program Files\Python310\python.exe",
+                    @"C:\Program Files\Python311\python.exe",
+                    @"C:\Program Files\Python312\python.exe"
+                };
+
+                foreach (var path in pythonPaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        pythonExe = path;
+                        break;
+                    }
+                }
+            }
+
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = pythonExe,
+                Arguments = $"\"{scriptPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath)
+            };
+
+            using var process = new Process { StartInfo = processInfo };
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) outputBuilder.AppendLine(e.Data);
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) errorBuilder.AppendLine(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            var output = outputBuilder.ToString();
+            var error = errorBuilder.ToString();
+            var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\n{error}";
+
+            return new ServiceResponse
+            {
+                Success = process.ExitCode == 0,
+                Message = process.ExitCode == 0 ? "Python script executed successfully" : $"Python script failed with exit code {process.ExitCode}",
+                Output = combinedOutput.Trim(),
+                ExitCode = process.ExitCode
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = $"Python script execution error: {ex.Message}",
+                Output = ""
+            };
+        }
+    }
+
+    private async Task<ServiceResponse> ExecutePerlScript(string scriptPath)
+    {
+        try
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "perl",
+                Arguments = $"\"{scriptPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath)
+            };
+
+            using var process = new Process { StartInfo = processInfo };
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) outputBuilder.AppendLine(e.Data);
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) errorBuilder.AppendLine(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            var output = outputBuilder.ToString();
+            var error = errorBuilder.ToString();
+            var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\n{error}";
+
+            return new ServiceResponse
+            {
+                Success = process.ExitCode == 0,
+                Message = process.ExitCode == 0 ? "Perl script executed successfully" : $"Perl script failed with exit code {process.ExitCode}",
+                Output = combinedOutput.Trim(),
+                ExitCode = process.ExitCode
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = $"Perl script execution error: {ex.Message}",
+                Output = ""
+            };
+        }
+    }
+
+    private async Task<ServiceResponse> ExecuteShellScript(string scriptPath, string shellType)
+    {
+        try
+        {
+            // Make the script executable on Unix-like systems
+            if (!OperatingSystem.IsWindows())
+            {
+                var chmodProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "chmod",
+                        Arguments = $"+x \"{scriptPath}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                chmodProcess.Start();
+                await chmodProcess.WaitForExitAsync();
+            }
+
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = shellType.ToLower() switch
+                {
+                    "bash" => OperatingSystem.IsWindows() ? "bash" : "/bin/bash",
+                    "sh" => OperatingSystem.IsWindows() ? "sh" : "/bin/sh",
+                    _ => OperatingSystem.IsWindows() ? "bash" : "/bin/bash"
+                },
+                Arguments = $"\"{scriptPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath)
+            };
+
+            using var process = new Process { StartInfo = processInfo };
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) outputBuilder.AppendLine(e.Data);
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null) errorBuilder.AppendLine(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            var output = outputBuilder.ToString();
+            var error = errorBuilder.ToString();
+            var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\n{error}";
+
+            return new ServiceResponse
+            {
+                Success = process.ExitCode == 0,
+                Message = process.ExitCode == 0 ? $"{shellType} script executed successfully" : $"{shellType} script failed with exit code {process.ExitCode}",
+                Output = combinedOutput.Trim(),
+                ExitCode = process.ExitCode
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ServiceResponse
+            {
+                Success = false,
+                Message = $"{shellType} script execution error: {ex.Message}",
+                Output = ""
+            };
         }
     }
 
