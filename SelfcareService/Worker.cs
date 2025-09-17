@@ -100,16 +100,41 @@ public class Worker : BackgroundService
         {
             await File.WriteAllTextAsync(portFilePath, _port.ToString());
             
-            // Also write to /tmp for compatibility with regular users
-            string tmpPortFile = "/tmp/selfcare_port.txt";
-            try
+            // On Windows, also write to a common location accessible by all users
+            if (OperatingSystem.IsWindows())
             {
-                await File.WriteAllTextAsync(tmpPortFile, _port.ToString());
-                _logger.LogInformation($"Port file also written to {tmpPortFile}");
+                // Write to ProgramData which is accessible by all users
+                string programDataPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                string selfcareDir = Path.Combine(programDataPath, "SelfCare");
+                
+                try
+                {
+                    // Create directory if it doesn't exist
+                    Directory.CreateDirectory(selfcareDir);
+                    
+                    string commonPortFile = Path.Combine(selfcareDir, "selfcare_port.txt");
+                    await File.WriteAllTextAsync(commonPortFile, _port.ToString());
+                    
+                    _logger.LogInformation($"Port file also written to common location: {commonPortFile}");
+                }
+                catch (Exception commonEx)
+                {
+                    _logger.LogWarning(commonEx, $"Failed to write port file to ProgramData location");
+                }
             }
-            catch (Exception tmpEx)
+            else
             {
-                _logger.LogWarning(tmpEx, $"Failed to write port file to {tmpPortFile}");
+                // Linux: Also write to /tmp for compatibility with regular users
+                string tmpPortFile = "/tmp/selfcare_port.txt";
+                try
+                {
+                    await File.WriteAllTextAsync(tmpPortFile, _port.ToString());
+                    _logger.LogInformation($"Port file also written to {tmpPortFile}");
+                }
+                catch (Exception tmpEx)
+                {
+                    _logger.LogWarning(tmpEx, $"Failed to write port file to {tmpPortFile}");
+                }
             }
             
             // Set secure permissions on Unix systems
@@ -130,6 +155,7 @@ public class Worker : BackgroundService
                 // Make tmp file readable by all users
                 try
                 {
+                    var tmpPortFile = "/tmp/selfcare_port.txt";
                     var chmodTmp = new ProcessStartInfo
                     {
                         FileName = "chmod",
@@ -144,7 +170,7 @@ public class Worker : BackgroundService
                 }
                 catch (Exception chmodEx)
                 {
-                    _logger.LogWarning(chmodEx, $"Failed to set permissions on {tmpPortFile}");
+                    _logger.LogWarning(chmodEx, $"Failed to set permissions on /tmp/selfcare_port.txt");
                 }
             }
             
@@ -220,7 +246,19 @@ public class Worker : BackgroundService
                     var request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     _logger.LogInformation($"Received request from client");
                     
-                    // Extract auth key and actual request
+                    // Check if this is a WMI query request with headers
+                if (request.Contains("HEADER:wmi_query=true"))
+                {
+                    _logger.LogInformation("Processing WMI query request with headers");
+                    var wmiResponse = await ProcessWmiQueryRequest(request);
+                    var wmiResponseBytes = Encoding.UTF8.GetBytes(wmiResponse);
+                    
+                    await stream.WriteAsync(wmiResponseBytes, cancellationToken);
+                    await stream.FlushAsync(cancellationToken);
+                    return;
+                }
+                    
+                    // Extract auth key and actual request (legacy format)
                     var lines = request.Split('\n', 2);
                     if (lines.Length < 2)
                     {
@@ -251,6 +289,62 @@ public class Worker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling client");
+        }
+    }
+
+    private async Task<string> ProcessWmiQueryRequest(string request)
+    {
+        try
+        {
+            // Parse WMI request with headers
+            var wmiRequest = WmiQueryRequest.Parse(request);
+            
+            // Validate authentication if present
+            if (wmiRequest.Headers.ContainsKey("auth"))
+            {
+                var authToken = wmiRequest.Headers["auth"];
+                if (authToken != "selfcare:SelfCare@#2025")
+                {
+                    _logger.LogWarning($"WMI authentication failed");
+                    return JsonSerializer.Serialize(new WmiQueryResponse
+                    {
+                        Success = false,
+                        Error = "Authentication failed",
+                        Data = null
+                    });
+                }
+            }
+            
+            // Create WMI handler with typed logger
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var wmiLogger = loggerFactory.CreateLogger<WmiQueryHandler>();
+            var wmiHandler = new WmiQueryHandler(wmiLogger);
+            
+            // Validate query safety
+            if (!wmiHandler.IsQuerySafe(wmiRequest.Query))
+            {
+                return JsonSerializer.Serialize(new WmiQueryResponse
+                {
+                    Success = false,
+                    Error = "Query contains unsafe operations",
+                    Data = null
+                });
+            }
+            
+            // Process the WMI query
+            var response = await wmiHandler.ProcessWmiQuery(wmiRequest.Query, wmiRequest.Headers);
+            
+            return JsonSerializer.Serialize(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing WMI request");
+            return JsonSerializer.Serialize(new WmiQueryResponse
+            {
+                Success = false,
+                Error = ex.Message,
+                Data = null
+            });
         }
     }
 
@@ -551,10 +645,22 @@ public class Worker : BackgroundService
             {
                 using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
                 var principal = new System.Security.Principal.WindowsPrincipal(identity);
-                return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                
+                // Check if running as Administrator
+                bool isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                
+                // Also check if running as SYSTEM account (Windows Services typically run as SYSTEM)
+                // SYSTEM account has even higher privileges than Administrator
+                bool isSystem = identity.IsSystem;
+                
+                // Log for debugging
+                _logger.LogDebug($"Windows privilege check - User: {identity.Name}, IsAdmin: {isAdmin}, IsSystem: {isSystem}");
+                
+                return isAdmin || isSystem;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error checking Windows privileges");
                 return false;
             }
         }
