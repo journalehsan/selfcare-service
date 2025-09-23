@@ -1056,9 +1056,23 @@ public class Worker : BackgroundService
 
         try
         {
-            // Create a safe temporary directory for script execution
-            string tempDir = Path.Combine(Path.GetTempPath(), "selfcare_scripts");
-            Directory.CreateDirectory(tempDir);
+            // Create a safe temporary directory for script execution with fallback
+            string tempDir;
+            try
+            {
+                tempDir = Path.Combine(Path.GetTempPath(), "selfcare_scripts");
+                Directory.CreateDirectory(tempDir);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to create preferred temp directory, using system temp");
+                // Fallback to direct temp path
+                tempDir = Path.GetTempPath();
+                if (!Directory.Exists(tempDir))
+                {
+                    throw new InvalidOperationException("Cannot access any temporary directory for script execution");
+                }
+            }
 
             // Generate a unique filename based on script type
             string fileExtension = scriptType.ToLower() switch
@@ -1129,19 +1143,60 @@ public class Worker : BackgroundService
     {
         try
         {
+            // Resolve VBScript executor path using enhanced Windows command resolution
+            string cscriptPath = ResolveWindowsCommand("cscript");
+            
+            // If cscript is not found, try alternative VBScript executors
+            if (cscriptPath == "cscript" && !File.Exists(cscriptPath))
+            {
+                var vbsExecutors = new[]
+                {
+                    @"C:\Windows\System32\cscript.exe",
+                    @"C:\Windows\SysWOW64\cscript.exe",
+                    @"C:\Windows\System32\wscript.exe"
+                };
+                
+                foreach (var executor in vbsExecutors)
+                {
+                    if (File.Exists(executor))
+                    {
+                        cscriptPath = executor;
+                        break;
+                    }
+                }
+                
+                // If still not found, return informative error
+                if (cscriptPath == "cscript")
+                {
+                    return new ServiceResponse
+                    {
+                        Success = false,
+                        Message = "VBScript engine (cscript.exe) not found. VBScript may not be installed on this Windows system.",
+                        Output = "Error: The system cannot find the path specified (VBScript engine missing)"
+                    };
+                }
+            }
+
             var processInfo = new ProcessStartInfo
             {
-                FileName = "cscript.exe",
-                Arguments = $"//NoLogo //B \"{scriptPath}\"",
+                FileName = cscriptPath,
+                Arguments = cscriptPath.EndsWith("wscript.exe") ? 
+                    $"\"{scriptPath}\"" : $"//NoLogo //B \"{scriptPath}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true,
-                WorkingDirectory = Path.GetDirectoryName(scriptPath)
+                WorkingDirectory = GetSafeWorkingDirectory(scriptPath)
             };
 
             // Set environment variables to suppress VBScript dialogs
             processInfo.EnvironmentVariables["WSH_BATCH"] = "1";
+
+            // Enhanced environment setup for Windows
+            if (OperatingSystem.IsWindows())
+            {
+                SetupWindowsEnvironment(processInfo);
+            }
 
             using var process = new Process { StartInfo = processInfo };
             var outputBuilder = new StringBuilder();
@@ -1189,9 +1244,12 @@ public class Worker : BackgroundService
     {
         try
         {
+            // Resolve cmd.exe path using enhanced Windows command resolution
+            string cmdPath = ResolveWindowsCommand("cmd");
+            
             var processInfo = new ProcessStartInfo
             {
-                FileName = "cmd.exe",
+                FileName = cmdPath,
                 Arguments = $"/c \"{scriptPath}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -1199,6 +1257,12 @@ public class Worker : BackgroundService
                 CreateNoWindow = true,
                 WorkingDirectory = Path.GetDirectoryName(scriptPath)
             };
+
+            // Enhanced environment setup for Windows
+            if (OperatingSystem.IsWindows())
+            {
+                SetupWindowsEnvironment(processInfo);
+            }
 
             using var process = new Process { StartInfo = processInfo };
             var outputBuilder = new StringBuilder();
@@ -1246,9 +1310,12 @@ public class Worker : BackgroundService
     {
         try
         {
+            // Resolve PowerShell path using enhanced Windows command resolution
+            string powershellPath = ResolveWindowsCommand("powershell");
+            
             var processInfo = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
+                FileName = powershellPath,
                 Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -1256,6 +1323,12 @@ public class Worker : BackgroundService
                 CreateNoWindow = true,
                 WorkingDirectory = Path.GetDirectoryName(scriptPath)
             };
+
+            // Enhanced environment setup for Windows
+            if (OperatingSystem.IsWindows())
+            {
+                SetupWindowsEnvironment(processInfo);
+            }
 
             using var process = new Process { StartInfo = processInfo };
             var outputBuilder = new StringBuilder();
@@ -2569,6 +2642,73 @@ public class Worker : BackgroundService
         {
             // On Linux, check if running as root
             return Environment.UserName == "root" || Environment.GetEnvironmentVariable("USER") == "root";
+        }
+    }
+
+    /// <summary>
+    /// Get a safe working directory that exists, with fallback options to prevent "path not found" errors
+    /// </summary>
+    private string GetSafeWorkingDirectory(string scriptPath)
+    {
+        try
+        {
+            // Strategy 1: Use the script's directory if it exists
+            var scriptDir = Path.GetDirectoryName(scriptPath);
+            if (!string.IsNullOrEmpty(scriptDir) && Directory.Exists(scriptDir))
+            {
+                return scriptDir;
+            }
+
+            // Strategy 2: Use system temp directory
+            var tempPath = Path.GetTempPath();
+            if (Directory.Exists(tempPath))
+            {
+                return tempPath;
+            }
+
+            // Strategy 3: Platform-specific fallbacks
+            if (OperatingSystem.IsWindows())
+            {
+                var windowsFallbacks = new[]
+                {
+                    @"C:\Windows\Temp",
+                    @"C:\Temp",
+                    @"C:\Windows\System32",
+                    @"C:\"
+                };
+
+                foreach (var fallback in windowsFallbacks)
+                {
+                    if (Directory.Exists(fallback))
+                    {
+                        _logger.LogWarning($"Using fallback working directory: {fallback}");
+                        return fallback;
+                    }
+                }
+            }
+            else
+            {
+                var linuxFallbacks = new[] { "/tmp", "/var/tmp", "/", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) };
+
+                foreach (var fallback in linuxFallbacks)
+                {
+                    if (Directory.Exists(fallback))
+                    {
+                        _logger.LogWarning($"Using fallback working directory: {fallback}");
+                        return fallback;
+                    }
+                }
+            }
+
+            // Strategy 4: Last resort - current directory
+            var currentDir = Environment.CurrentDirectory;
+            _logger.LogError($"All working directory options failed, using current directory: {currentDir}");
+            return currentDir;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error determining safe working directory, using current directory");
+            return Environment.CurrentDirectory;
         }
     }
 

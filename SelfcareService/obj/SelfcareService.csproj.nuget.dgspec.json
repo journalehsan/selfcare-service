@@ -45,6 +45,20 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "AudioSwitcher.AudioApi": {
+              "target": "Package",
+              "version": "[4.0.0-alpha5, )",
+              "noWarn": [
+                "NU1701"
+              ]
+            },
+            "AudioSwitcher.AudioApi.CoreAudio": {
+              "target": "Package",
+              "version": "[4.0.0-alpha5, )",
+              "noWarn": [
+                "NU1701"
+              ]
+            },
             "Microsoft.Extensions.Hosting": {
               "target": "Package",
               "version": "[9.0.0, )"
@@ -56,6 +70,14 @@
             "Microsoft.Extensions.Hosting.WindowsServices": {
               "target": "Package",
               "version": "[9.0.0, )"
+            },
+            "System.Diagnostics.PerformanceCounter": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "System.Management": {
+              "target": "Package",
+              "version": "[7.0.2, )"
             },
             "System.Text.Json": {
               "target": "Package",
@@ -73,12 +95,31 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[9.0.9, 9.0.9]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.9, 9.0.9]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.win-x64",
+              "version": "[9.0.9, 9.0.9]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.109/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.110/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

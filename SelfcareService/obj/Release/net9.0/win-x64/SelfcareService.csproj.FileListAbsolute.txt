@@ -476,7 +476,7 @@
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/hostfxr.dll
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/hostpolicy.dll
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore.dll
-/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore_amd64_amd64_9.0.825.36511.dll
+/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore_amd64_amd64_9.0.925.41916.dll
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordbi.dll
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscorrc.dll
 /home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/msquic.dll
