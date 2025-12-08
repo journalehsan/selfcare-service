@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj": {}
+    "/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj": {}
   },
   "projects": {
-    "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj": {
+    "/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
+        "projectUniqueName": "/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
         "projectName": "SelfcareService",
-        "projectPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
-        "packagesPath": "/home/ehsan.tor@mtnirancell.ir/.nuget/packages/",
-        "outputPath": "/home/ehsan.tor@mtnirancell.ir/Documents/GitHub/selfcare-service/SelfcareService/obj/",
+        "projectPath": "/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
+        "packagesPath": "/home/ehsator/.nuget/packages/",
+        "outputPath": "/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/ehsan.tor@mtnirancell.ir/.nuget/NuGet/NuGet.Config"
+          "/home/ehsator/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "/usr/lib64/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -97,6 +96,10 @@
           "warn": true,
           "downloadDependencies": [
             {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[9.0.9, 9.0.9]"
+            },
+            {
               "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
               "version": "[9.0.9, 9.0.9]"
             },
@@ -114,7 +117,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.110/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.110/PortableRuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {
