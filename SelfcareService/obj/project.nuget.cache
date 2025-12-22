@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "XJ+ZRI/rNLo=",
+  "dgSpecHash": "AIMLtV/yynQ=",
   "success": true,
   "projectFilePath": "/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/SelfcareService.csproj",
   "expectedPackageFiles": [
@@ -43,10 +43,11 @@
     "/home/ehsator/.nuget/packages/system.security.cryptography.protecteddata/9.0.0/system.security.cryptography.protecteddata.9.0.0.nupkg.sha512",
     "/home/ehsator/.nuget/packages/system.serviceprocess.servicecontroller/9.0.0/system.serviceprocess.servicecontroller.9.0.0.nupkg.sha512",
     "/home/ehsator/.nuget/packages/system.text.json/9.0.0/system.text.json.9.0.0.nupkg.sha512",
-    "/home/ehsator/.nuget/packages/microsoft.netcore.app.runtime.win-x64/9.0.9/microsoft.netcore.app.runtime.win-x64.9.0.9.nupkg.sha512",
-    "/home/ehsator/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.9/microsoft.aspnetcore.app.ref.9.0.9.nupkg.sha512",
-    "/home/ehsator/.nuget/packages/microsoft.aspnetcore.app.runtime.win-x64/9.0.9/microsoft.aspnetcore.app.runtime.win-x64.9.0.9.nupkg.sha512",
-    "/home/ehsator/.nuget/packages/microsoft.netcore.app.host.win-x64/9.0.9/microsoft.netcore.app.host.win-x64.9.0.9.nupkg.sha512"
+    "/home/ehsator/.nuget/packages/microsoft.netcore.app.ref/9.0.11/microsoft.netcore.app.ref.9.0.11.nupkg.sha512",
+    "/home/ehsator/.nuget/packages/microsoft.netcore.app.runtime.win-x64/9.0.11/microsoft.netcore.app.runtime.win-x64.9.0.11.nupkg.sha512",
+    "/home/ehsator/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.11/microsoft.aspnetcore.app.ref.9.0.11.nupkg.sha512",
+    "/home/ehsator/.nuget/packages/microsoft.aspnetcore.app.runtime.win-x64/9.0.11/microsoft.aspnetcore.app.runtime.win-x64.9.0.11.nupkg.sha512",
+    "/home/ehsator/.nuget/packages/microsoft.netcore.app.host.win-x64/9.0.11/microsoft.netcore.app.host.win-x64.9.0.11.nupkg.sha512"
   ],
   "logs": []
 }

@@ -476,7 +476,7 @@
 /home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/hostfxr.dll
 /home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/hostpolicy.dll
 /home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore.dll
-/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore_amd64_amd64_9.0.925.41916.dll
+/home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordaccore_amd64_amd64_9.0.1125.51716.dll
 /home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscordbi.dll
 /home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/mscorrc.dll
 /home/ehsator/Documents/GitHub/selfcare-service/SelfcareService/bin/Release/net9.0/win-x64/msquic.dll
